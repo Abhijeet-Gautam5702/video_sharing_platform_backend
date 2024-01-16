@@ -1,0 +1,16 @@
+{
+  "name": "video_sharing_platform_backend",
+  "version": "1.0.0",
+  "description": "This project contains the backend for a video sharing platform, built using NodeJS and ExpressJS for the backend and Mongoose/MongoDB for the database, along with other assisting libraries and packages.",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev":"nodemon src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
