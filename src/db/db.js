@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
+import asyncHandler from "../../utils/asyncHandler.js";
 
 /*
 NOTE: Always use try-catch blocks and async-await structures while working with databases.
@@ -17,7 +18,7 @@ async function connectDB() {
         By logging connection-host, we get to know what database we are connected to.
         */
         console.log(
-            `\n MongoDB connected. Connection Host: ${connectionInstance.connection.host}`
+            `MongoDB connected. Connection Host: ${connectionInstance.connection.host}`
         );
     } catch (error) {
         console.error(`MongoDB Connection Error: ${error}`);
