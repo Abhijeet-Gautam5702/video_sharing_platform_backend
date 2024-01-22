@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
-import asyncHandler from "../../utils/asyncHandler.js";
 
 /*
 NOTE: Always use try-catch blocks and async-await structures while working with databases.
