@@ -9,7 +9,7 @@ dotenv.config();
 // Invoking the connectionDB function to connect to the MongoDB database.
 // NOTE: An async-function returns a promise
 connectDB()
-    .then(() => {
+    .then(async () => {
         // Express listener: Listens for any errors and executes a callback
         app.on("error", (err) => {
             console.log(`EXPRESS APP ERROR | ${err}`);

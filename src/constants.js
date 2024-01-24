@@ -11,4 +11,6 @@ NOTE: Do not use sensitive values such as API keys, Database Connection Strings 
 
 const DB_NAME = "video_sharing_platform";
 
-export { DB_NAME };
+const CLOUDINARY_CLOUD_NAME = "dmso2v4ec";
+
+export { DB_NAME, CLOUDINARY_CLOUD_NAME };

@@ -1,5 +1,6 @@
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import uploadOnCloudinary from "../utils/fileUpload.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import User from "../models/user.models.js";
 
@@ -18,8 +19,10 @@ import User from "../models/user.models.js";
     - Send response to the client
 */
 const registerUser = asyncHandler(async (req, res) => {
+    // STEP-1: Get user details from the frontend (via body or headers)
     const { username, fullname, email, password } = req.body;
 
+    // STEP-2: Validation: Check if all required data is sent and data is not empty
     if (
         // returns true if any of the fields is either empty string or undefined
         // throw a custom apiError object defined in src/utils
@@ -30,6 +33,10 @@ const registerUser = asyncHandler(async (req, res) => {
         throw new apiError(400, "One or more fields are empty");
     }
 
+    // STEP-3: Check if the user already exists (username and email are unique fields)
+    /*
+        NOTE: `$or` is a FilterQuery provided by Mongoose that finds entries in the database which contain any of the given paramaters (here, username or email)
+    */
     const isUserExist = await User.findOne({
         $or: [{ username }, { email }],
     });
@@ -39,29 +46,51 @@ const registerUser = asyncHandler(async (req, res) => {
             "User with this email or username already exists"
         );
     }
-    // --------------------------------------------------------
 
-    // Code for handling images PENDING
+    // STEP-4: Validation: Check if the images, especially avatar (required field) are sent by client
+    /*
+        NOTE: `req.files` is an object where fieldname is the key, and the value is array of files
 
-    // ---------------------------------------------------------
+        E.g. req.files.avatar[0] => First avatar file
+             req.files.avatar    => Array of avatar files (although we have set maxCount = 1)
+    */
+    const avatarLocalPath = await req.files?.avatar[0]?.path;
+    const coverImageLocalPath = await req.files?.coverImage[0]?.path;
+    if (!avatarLocalPath) {
+        throw new apiError(400, "Avatar file is required");
+    }
 
+    // STEP-5: Upload all images to cloudinary and obtain URL
+    const avatarUploaded = await uploadOnCloudinary(avatarLocalPath);
+    if (!avatar) {
+        throw new apiError(500, "Avatar file could not be uploaded");
+    }
+    const coverImageUploaded = await uploadOnCloudinary(coverImageLocalPath);
+
+    // STEP-6: Create a user object with all the necessary details using modelName.create()
     const user = await User.create({
-        username: username.toLowerCase(),
+        username: username.toLowerCase(), // store username in lowercase in the Database
         email,
         password,
         fullname,
-        // avatar :pending
-        // coverImage :pending
+        avatar: avatarUploaded.url,
+        coverImage: coverImageUploaded.url || "", // OPTIONAL FIELD: if coverImage isn't provided, store empty string
     });
 
+    // STEP-7: Remove password and refresh token fields from the response
+    /*
+        NOTE: Mongoose provides QUERY PROJECTION using the `.select()` to exclude certain fields ("-password -refreshToken") and then return the modified instance
+    */
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     );
 
+    // STEP-8: Check if the user creation was successful
     if (!createdUser) {
         throw new apiError(500, "User could not be created");
     }
 
+    // STEP-9: Send response to the client
     res.status(200).json(
         new apiResponse(200, createdUser, "User Registration Successful")
     );

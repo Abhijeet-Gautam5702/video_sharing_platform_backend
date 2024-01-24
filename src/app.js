@@ -36,7 +36,7 @@ app.use(
 );
 
 /*
-    `express.static()` Middleware: Used to store static assets like PDFs, images, icons etc.
+    `express.static()` Middleware: Used to store static assets/files like PDFs, images, icons etc.
 */
 app.use(express.static("public")); // "public" is the name of the folder
 
