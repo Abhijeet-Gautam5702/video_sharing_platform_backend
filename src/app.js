@@ -19,11 +19,7 @@ app.use(
 /*
     `express.json()` Middleware: Used to take JSON inputs from request body
 */
-app.use(
-    express.json({
-        limit: "16kb",
-    })
-);
+app.use(express.json());
 
 /*
     `express.urlencoded()` Middleware: Used to take inputs from URL-encoded payloads
@@ -38,7 +34,7 @@ app.use(
 /*
     `express.static()` Middleware: Used to store static assets/files like PDFs, images, icons etc.
 */
-app.use(express.static("public")); // "public" is the name of the folder
+app.use(express.static("../public")); // "public" is the name of the folder
 
 /*
     `cookieParser()` Middleware: Used to store secure cookie which only the Server can read

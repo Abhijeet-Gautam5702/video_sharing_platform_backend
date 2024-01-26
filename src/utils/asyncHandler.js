@@ -9,11 +9,13 @@ NOTE-2: Always throw errors in try-catch blocks
 const asyncHandler = (callbackFn) => {
     return async (req, res, next) => {
         try {
+            console.log("ASYNC-HANDLER TRY-BLOCK EXECUTES")
             await callbackFn(req, res, next);
         } catch (err) {
-            res.status(err.statusCode).json({
+            console.log("ASYNC-HANDLER ERROR-BLOCK EXECUTES")
+            res.status(400).json({
                 success: false,
-                errorMessage: err.message,
+                message: err.message,
             });
             // throw err; // IMPORTANT:  The backend will stop forever once any error is found in any API-route
         }

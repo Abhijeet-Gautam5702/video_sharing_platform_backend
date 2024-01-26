@@ -36,7 +36,6 @@ const userSchema = new mongoose.Schema(
         },
         avatar: {
             type: String, // Cloudinary URL
-            required: true,
         },
         watchHistory: [
             {
@@ -44,7 +43,10 @@ const userSchema = new mongoose.Schema(
                 ref: "Video",
             },
         ],
-        refreshToken: { type: String },
+        refreshToken: {
+            type: String,
+            required: false,
+        },
     },
     { timestamps: true }
 );

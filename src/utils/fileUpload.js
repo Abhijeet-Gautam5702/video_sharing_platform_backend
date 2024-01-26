@@ -10,10 +10,15 @@ import fs from "node:fs";
 import { v2 as cloudinary } from "cloudinary";
 import { CLOUDINARY_CLOUD_NAME } from "../constants.js";
 
+// cloudinary.config({
+//     cloud_name: CLOUDINARY_CLOUD_NAME,
+//     api_key: process.env.CLOUDINARY_API_KEY,
+//     api_secret: process.env.CLOUDINARY_API_SECRET,
+// });
 cloudinary.config({
     cloud_name: CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    api_key: "558651113423662",
+    api_secret: "5BfFPsfwbNtfteXvCbBWsd7mHZc",
 });
 
 async function uploadOnCloudinary(localFilePath) {
@@ -30,7 +35,9 @@ async function uploadOnCloudinary(localFilePath) {
         console.log(`File uploaded successfully | URL: ${response.url}`);
         return response;
     } catch (error) {
-        fs.unlinkSync(localFilePath); // unlink/delete the locally-stored file as the cloudinary-upload failed
+        console.log(error)
+        // uncomment this after testing is done
+        // fs.unlinkSync(localFilePath); // unlink/delete the locally-stored file as the cloudinary-upload failed
         return null;
     }
 }
