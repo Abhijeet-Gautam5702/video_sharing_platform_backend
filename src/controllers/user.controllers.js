@@ -19,8 +19,6 @@ import User from "../models/user.models.js";
     - Send response to the client
 */
 const registerUser = asyncHandler(async (req, res) => {
-    console.log("START-------");
-
     // STEP-1: Get user details from the frontend (via body or headers)
     const { username, fullname, email, password } = req.body;
 
@@ -32,7 +30,6 @@ const registerUser = asyncHandler(async (req, res) => {
             return (field && field.trim() === "") || !field;
         })
     ) {
-        console.log("FIELDS empty");
         throw new apiError(400, "One or more fields are empty");
     }
 
@@ -44,7 +41,6 @@ const registerUser = asyncHandler(async (req, res) => {
         $or: [{ username }, { email }],
     });
     if (isUserExist) {
-        console.log("USER EXISTS");
         throw new apiError(
             409,
             "User with this email or username already exists"
@@ -58,22 +54,15 @@ const registerUser = asyncHandler(async (req, res) => {
         E.g. req.files.avatar[0] => First avatar file 
              req.files.avatar    => Array of Avatar files 
     */
-    console.log(req.files); // coverImage not getting uploaded
     const avatarLocalPath = await req.files["avatar"][0].path;
-    // const coverImageLocalPath = await req.files?.coverImage[0]?.path;
     const coverImageLocalPath = await req.files["cover"][0].path;
     if (!avatarLocalPath) {
-        console.log("AVATAR NOT GIVEN \navatarPath: ", avatarLocalPath);
-        console.log("coverImagePath: ", coverImageLocalPath);
         throw new apiError(400, "Avatar file is required");
     }
-    console.log("avatarPath: ", avatarLocalPath);
-    console.log("coverImagePath: ", coverImageLocalPath);
 
     // STEP-5: Upload all images to cloudinary and obtain URL
     const avatarUploaded = await uploadOnCloudinary(avatarLocalPath);
     if (!avatarUploaded) {
-        console.log("AVATAR NOT UPLOADED");
         throw new apiError(500, "Avatar file could not be uploaded");
     }
     const coverImageUploaded = await uploadOnCloudinary(coverImageLocalPath);
@@ -98,11 +87,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // STEP-8: Check if the user creation was successful
     if (!createdUser) {
-        console.log("USER NOT CREATED");
         throw new apiError(500, "User could not be created");
     }
-
-    console.log("ENDS--------"); // not executing
 
     // STEP-9: Send response to the client
     res.status(200).json(
