@@ -13,7 +13,7 @@ const asyncHandler = (callbackFn) => {
             await callbackFn(req, res, next);
         } catch (err) {
             console.log("ASYNC-HANDLER ERROR-BLOCK EXECUTES")
-            res.status(400).json({
+            res.status(500 || err.statusCode).json({
                 success: false,
                 message: err.message,
             });
