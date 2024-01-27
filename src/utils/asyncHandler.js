@@ -9,11 +9,9 @@ NOTE-2: Always throw errors in try-catch blocks
 const asyncHandler = (callbackFn) => {
     return async (req, res, next) => {
         try {
-            console.log("ASYNC-HANDLER TRY-BLOCK EXECUTES")
             await callbackFn(req, res, next);
         } catch (err) {
-            console.log("ASYNC-HANDLER ERROR-BLOCK EXECUTES")
-            res.status(500 || err.statusCode).json({
+            res.status(err.statusCode || 500).json({
                 success: false,
                 message: err.message,
             });

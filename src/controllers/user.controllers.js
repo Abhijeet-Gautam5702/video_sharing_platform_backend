@@ -54,8 +54,16 @@ const registerUser = asyncHandler(async (req, res) => {
         E.g. req.files.avatar[0] => First avatar file 
              req.files.avatar    => Array of Avatar files 
     */
-    const avatarLocalPath = await req.files["avatar"][0].path;
-    const coverImageLocalPath = await req.files["cover"][0].path;
+    //    let avatarLocalPath =  req.files?.avatar[0]?.path;
+    //    let coverImageLocalPath =  req.files?.cover[0]?.path;
+    let avatarLocalPath = null;
+    let coverImageLocalPath = null;
+    if (req.files["avatar"]) {
+        avatarLocalPath = req.files["avatar"][0].path;
+    }
+    if (req.files["cover"]) {
+        coverImageLocalPath = req.files["cover"][0].path;
+    }
     if (!avatarLocalPath) {
         throw new apiError(400, "Avatar file is required");
     }
@@ -65,7 +73,11 @@ const registerUser = asyncHandler(async (req, res) => {
     if (!avatarUploaded) {
         throw new apiError(500, "Avatar file could not be uploaded");
     }
-    const coverImageUploaded = await uploadOnCloudinary(coverImageLocalPath);
+    // Upload Cover Image only if it is present locally (i.e. the client provided it)
+    let coverImageUploaded = null;
+    if (coverImageLocalPath) {
+        coverImageUploaded = await uploadOnCloudinary(coverImageLocalPath);
+    }
 
     // STEP-6: Create a user object with all the necessary details using modelName.create()
     const user = await User.create({
@@ -74,7 +86,7 @@ const registerUser = asyncHandler(async (req, res) => {
         password,
         fullname,
         avatar: avatarUploaded.url,
-        coverImage: coverImageUploaded.url || "", // OPTIONAL FIELD: if coverImage isn't provided, store empty string
+        coverImage: coverImageUploaded?.url || "", // OPTIONAL FIELD: if coverImage isn't provided, store empty string
     });
 
     // STEP-7: Remove password and refresh token fields from the response
