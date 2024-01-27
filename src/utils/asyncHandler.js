@@ -13,6 +13,7 @@ const asyncHandler = (callbackFn) => {
         } catch (err) {
             res.status(err.statusCode || 500).json({
                 success: false,
+                statusCode: err.statusCode || 500,
                 message: err.message,
             });
             // throw err; // IMPORTANT:  The backend will stop forever once any error is found in any API-route
