@@ -72,15 +72,17 @@ userSchema.pre("save", async function (next) {
 
 /*
     Custom Mongoose Methods: Business Logic enclosed in a function/method related to a specific mongoose model
+
+    NOTE: Custom Mongoose Methods are valid only on Mongoose documents (or instances of the Mongoose models) that we create and not the Mongoose models.
 */
 
 // Mongoose Method: Password-Validation
-userSchema.methods.isPasswordCorrect = async function (password) {
+userSchema.methods.validatePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };
 
 //  Mongoose Method: Access-Token-Generator
-userSchema.methods.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = async function () {
     return jwt.sign(
         {
             _id: this._id,
@@ -96,7 +98,7 @@ userSchema.methods.generateAccessToken = function () {
 };
 
 // Mongoose Method: Refresh-Access-Token Generator
-userSchema.methods.generateRefreshToken = function () {
+userSchema.methods.generateRefreshToken = async function () {
     return jwt.sign(
         {
             _id: this._id,
