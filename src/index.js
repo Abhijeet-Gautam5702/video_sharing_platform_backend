@@ -2,6 +2,7 @@
 import connectDB from "./db/db.js";
 import dotenv from "dotenv";
 import app from "./app.js";
+import cleanDirectory from "./utils/cleanDirectory.js";
 
 // NOTE: Congifure the dotenv package as soon as the entry file (here index.js) loads.
 dotenv.config();
@@ -24,3 +25,5 @@ connectDB()
         console.log(`MONGO DB CONNECTION FAILED | ${err}`);
         throw err;
     });
+
+

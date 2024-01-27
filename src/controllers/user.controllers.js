@@ -3,6 +3,7 @@ import { apiResponse } from "../utils/apiResponse.js";
 import uploadOnCloudinary from "../utils/fileUpload.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import User from "../models/user.models.js";
+import cleanDirectory from "../utils/cleanDirectory.js";
 
 // CONTROLLER: User Registration
 /*
@@ -17,6 +18,8 @@ import User from "../models/user.models.js";
     - Check if the user creation was successful
     - Remove password and refresh token fields from the response
     - Send response to the client
+
+    NOTE: Since Multer ensures a local-upload of each static file sent by the client, it is necessary to delete them in case of any potential errors in the controller. So remember to clean the `public/temp` directory.
 */
 const registerUser = asyncHandler(async (req, res) => {
     // STEP-1: Get user details from the frontend (via body or headers)
@@ -30,6 +33,7 @@ const registerUser = asyncHandler(async (req, res) => {
             return (field && field.trim() === "") || !field;
         })
     ) {
+        cleanDirectory("./public/temp"); // clean the temporarily stored static assets in `temp` folder
         throw new apiError(400, "One or more fields are empty");
     }
 
@@ -41,6 +45,7 @@ const registerUser = asyncHandler(async (req, res) => {
         $or: [{ username }, { email }],
     });
     if (isUserExist) {
+        cleanDirectory("./public/temp"); // clean the temporarily stored static assets in `temp` folder
         throw new apiError(
             409,
             "User with this email or username already exists"
@@ -54,8 +59,6 @@ const registerUser = asyncHandler(async (req, res) => {
         E.g. req.files.avatar[0] => First avatar file 
              req.files.avatar    => Array of Avatar files 
     */
-    //    let avatarLocalPath =  req.files?.avatar[0]?.path;
-    //    let coverImageLocalPath =  req.files?.cover[0]?.path;
     let avatarLocalPath = null;
     let coverImageLocalPath = null;
     if (req.files["avatar"]) {
@@ -65,12 +68,14 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImageLocalPath = req.files["cover"][0].path;
     }
     if (!avatarLocalPath) {
+        cleanDirectory("./public/temp"); // clean the temporarily stored static assets in `temp` folder
         throw new apiError(400, "Avatar file is required");
     }
 
     // STEP-5: Upload all images to cloudinary and obtain URL
     const avatarUploaded = await uploadOnCloudinary(avatarLocalPath);
     if (!avatarUploaded) {
+        cleanDirectory("./public/temp"); // clean the temporarily stored static assets in `temp` folder
         throw new apiError(500, "Avatar file could not be uploaded");
     }
     // Upload Cover Image only if it is present locally (i.e. the client provided it)
@@ -99,6 +104,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // STEP-8: Check if the user creation was successful
     if (!createdUser) {
+        cleanDirectory("./public/temp"); // clean the temporarily stored static assets in `temp` folder
         throw new apiError(500, "User could not be created");
     }
 

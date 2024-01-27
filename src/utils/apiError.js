@@ -12,7 +12,6 @@ class apiError extends Error {
         super(message);
         this.statusCode = statusCode;
         this.data = null;
-        // this.message = message;
         this.success = false;
         this.errors = errors;
 
@@ -21,6 +20,8 @@ class apiError extends Error {
         } else {
             Error.captureStackTrace(this, this.constructor);
         }
+
+        // unlink the tempo
     }
 }
 
