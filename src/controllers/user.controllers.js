@@ -216,4 +216,34 @@ const loginUser = asyncHandler(async (req, res) => {
         );
 });
 
-export { registerUser, loginUser };
+// CONTROLLER: User Logout
+const logoutUser = asyncHandler(async (req, res) => {
+    // Obtain userId from `req.user` object injected by the verifyJWT middleware (See user.routes.js file)
+    const userId = req.user._id;
+
+    // Find the user by userId and remove its refreshToken
+    const user = await User.findOneAndUpdate(
+        { _id: userId },
+        {
+            refreshToken: "",
+        },
+        { new: true } // If set to true => returns the new modified user object
+    );
+
+    if (user.refreshToken) {
+        throw new apiError(500, "Could not log out");
+    }
+
+    // Clear cookies and send response to the user
+    const cookieOptions = {
+        httpOnly: true, // ensures that the cookie is not modifiable by client-side
+        secure: true, // ensures that the cookie is sent over secure HTTPS connections only
+    };
+
+    res.status(200)
+        .clearCookie("accessToken", cookieOptions)
+        .clearCookie("refreshToken", cookieOptions)
+        .json(new apiResponse(200, {}, "User logged out successfully"));
+});
+
+export { registerUser, loginUser, logoutUser };

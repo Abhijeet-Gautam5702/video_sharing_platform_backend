@@ -38,6 +38,8 @@ app.use(express.static("../public")); // "public" is the name of the folder
 
 /*
     `cookieParser()` Middleware: Used to store secure cookie which only the Server can read
+
+    This gives an additional `req.cookies` object to the HTTP request
 */
 app.use(cookieParser());
 
