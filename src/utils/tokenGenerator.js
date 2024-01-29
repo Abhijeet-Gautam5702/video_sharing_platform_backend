@@ -1,4 +1,4 @@
-// Utility to generate tokens
+// Utility to generate access and refresh tokens
 
 import { apiError } from "./apiError.js";
 

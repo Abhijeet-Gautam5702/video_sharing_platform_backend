@@ -5,6 +5,19 @@ import asyncHandler from "../utils/asyncHandler.js";
 import User from "../models/user.models.js";
 import cleanDirectory from "../utils/cleanDirectory.js";
 import { generateAccessAndRefreshTokens } from "../utils/tokenGenerator.js";
+import jwt from "jsonwebtoken";
+
+/*
+    COOKIES
+    Small amount of client information stored by the website and sent in every request to improve user experiences such as saved-preferences, shopping-cart-details and seamless-user-authentication. Cookies are visible to all.
+
+    COOKIE OPTIONS
+    Attributes to ensure and enhance the security of the cookies
+*/
+const cookieOptions = {
+    httpOnly: true, // ensures that the cookie is not modifiable by client-side
+    secure: true, // ensures that the cookie is sent over secure HTTPS connections only
+};
 
 // CONTROLLER: User Registration
 /*
@@ -25,6 +38,7 @@ import { generateAccessAndRefreshTokens } from "../utils/tokenGenerator.js";
 const registerUser = asyncHandler(async (req, res) => {
     // STEP-1: Get user details from the frontend (via body or headers)
     const { username, fullname, email, password } = req.body;
+    console.log(req.body);
 
     // STEP-2: Validation: Check if all required data is sent and data is not empty
     if (
@@ -62,10 +76,10 @@ const registerUser = asyncHandler(async (req, res) => {
     */
     let avatarLocalPath = null;
     let coverImageLocalPath = null;
-    if (req.files["avatar"]) {
+    if (req.files?.avatar) {
         avatarLocalPath = req.files["avatar"][0].path;
     }
-    if (req.files["cover"]) {
+    if (req.files?.cover) {
         coverImageLocalPath = req.files["cover"][0].path;
     }
     if (!avatarLocalPath) {
@@ -186,20 +200,7 @@ const loginUser = asyncHandler(async (req, res) => {
         $or: [{ username }, { email }],
     }).select("-password -refreshToken");
 
-    //STEP-6: Send cookies
-    /*
-        COOKIES
-        Small amount of client information stored by the website and sent in every request to improve user experiences such as saved-preferences, shopping-cart-details and seamless-user-authentication. Cookies are visible to all.
-
-        COOKIE OPTIONS
-        Attributes to ensure and enhance the security of the cookies
-    */
-    const cookieOptions = {
-        httpOnly: true, // ensures that the cookie is not modifiable by client-side
-        secure: true, // ensures that the cookie is sent over secure HTTPS connections only
-    };
-
-    //STEP-7: Send success response to the user
+    //STEP-6: Send cookies with the success response to the user
     res.status(200)
         .cookie("accessToken", userAccessToken, cookieOptions)
         .cookie("refreshToken", userRefreshToken, cookieOptions)
@@ -217,6 +218,14 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 // CONTROLLER: User Logout
+/*
+    STEPS FOR USER LOGOUT CONTROLLER
+
+    - Authenticate the user => then only allow them to login (Auth Middleware)
+    - Obtain userId from `req.user` object injected by the verifyJWT middleware (See user.routes.js file)
+    - Find the user by userId and remove its refresh-token
+    - Clear cookies and send response to the user
+*/
 const logoutUser = asyncHandler(async (req, res) => {
     // Obtain userId from `req.user` object injected by the verifyJWT middleware (See user.routes.js file)
     const userId = req.user._id;
@@ -235,15 +244,76 @@ const logoutUser = asyncHandler(async (req, res) => {
     }
 
     // Clear cookies and send response to the user
-    const cookieOptions = {
-        httpOnly: true, // ensures that the cookie is not modifiable by client-side
-        secure: true, // ensures that the cookie is sent over secure HTTPS connections only
-    };
-
     res.status(200)
         .clearCookie("accessToken", cookieOptions)
         .clearCookie("refreshToken", cookieOptions)
         .json(new apiResponse(200, {}, "User logged out successfully"));
 });
 
-export { registerUser, loginUser, logoutUser };
+// CONTROLLER: Refresh the user access token
+/*
+    STEPS FOR REFRESH-ACCESS-TOKEN CONTROLLER
+
+    - Get the refresh token of the user from the cookies
+    - Check if the refresh token provided by the user is same as that present in the database
+    - Generate new access and refresh tokens & send them to the cookies with the success-message response
+*/
+const refreshAccessToken = asyncHandler(async (req, res) => {
+    // Get the refresh token of the user from the cookies
+    /*
+        NOTE: There could be a case where somebody sends the refresh token via the request body (In case of Mobile Applications where there is no concept of cookies). So we need to check for refresh tokens in both the places.
+
+        (This was the same thing done in `auth.middlewares.js`)
+    */
+    const refreshTokenFromCookie =
+        req.cookies.refreshToken || req.body.refreshToken;
+    if (!refreshTokenFromCookie) {
+        throw new apiError(401, "Unauthorized Request");
+    }
+
+    // Check if the refresh token provided by the user is same as that present in the database
+    const decodedInfoFromToken = jwt.verify(
+        refreshTokenFromCookie,
+        process.env.REFRESH_TOKEN_SECRET
+    );
+    const userId = decodedInfoFromToken._id;
+    const user = await User.findById(userId);
+    if (!user) {
+        throw new apiError(404, "User doesn't exist");
+    }
+    if (user.refreshToken !== refreshTokenFromCookie) {
+        throw new apiError(401, "Refresh token is expired");
+    }
+
+    // Generate new access and refresh tokens & send them to the cookies with the success-message response
+    const newTokens = await generateAccessAndRefreshTokens(user);
+    const newAccessToken = newTokens.accessToken;
+    const newRefreshToken = newTokens.refreshToken;
+
+    const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        {
+            refreshToken: newRefreshToken,
+        },
+        { new: true }
+    );
+    if (!updatedUser) {
+        throw new apiError(500, "Refresh Token could not be updated");
+    }
+
+    res.status(200)
+        .cookie("accessToken", newAccessToken, cookieOptions)
+        .cookie("refreshToken", newRefreshToken, cookieOptions)
+        .json(
+            new apiResponse(
+                200,
+                {
+                    user: updatedUser,
+                    accessToken: newAccessToken,
+                },
+                "User access token successfully refreshed"
+            )
+        );
+});
+
+export { registerUser, loginUser, logoutUser, refreshAccessToken };
