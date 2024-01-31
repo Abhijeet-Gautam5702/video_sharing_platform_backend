@@ -38,7 +38,6 @@ const cookieOptions = {
 const registerUser = asyncHandler(async (req, res) => {
     // STEP-1: Get user details from the frontend (via body or headers)
     const { username, fullname, email, password } = req.body;
-    console.log(req.body);
 
     // STEP-2: Validation: Check if all required data is sent and data is not empty
     if (
@@ -259,6 +258,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     - Generate new access and refresh tokens & send them to the cookies with the success-message response
 */
 const refreshAccessToken = asyncHandler(async (req, res) => {
+    // Authentication: Verify whether the user is authorized to hit this secured route
+
     // Get the refresh token of the user from the cookies
     /*
         NOTE: There could be a case where somebody sends the refresh token via the request body (In case of Mobile Applications where there is no concept of cookies). So we need to check for refresh tokens in both the places.
@@ -316,4 +317,158 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         );
 });
 
-export { registerUser, loginUser, logoutUser, refreshAccessToken };
+// CONTROLLER: Change the password of the current logged-in user
+/*
+    STEPS FOR CHANGE-PASSWORD CONTROLLER
+
+    - Authentication: Verify whether the user is authorized to hit this secured route
+    - Get details from the user and 
+        - Check if all the required details are provided
+        - Check if the new password and old password are different
+        - Check if the new password and the confirm-password are the same
+    - Check if the old password is the correct one
+    - Update the password and save
+    - Send success response to the user
+*/
+const changeUserPassword = asyncHandler(async (req, res) => {
+    // Authentication: Verify whether the user is authorized to hit this secured route
+
+    // Get details from the user
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    // Check if all the required details are provided
+    if (
+        [oldPassword, newPassword, confirmPassword].some(
+            (field) => !field || (field && field.trim() === "")
+        )
+    ) {
+        throw new apiError(400, "One or more fields are empty");
+    }
+
+    // Check if the new password and old password are different
+    if (newPassword?.trim() === oldPassword?.trim()) {
+        throw new apiError(
+            400,
+            "The old and the new passwords must not be same"
+        );
+    }
+
+    // Check if the new password and the confirm-password are the same
+    if (newPassword?.trim() !== confirmPassword?.trim()) {
+        throw new apiError(
+            400,
+            "The new password and the confirm-password field doesn't match"
+        );
+    }
+
+    // Check if the old password is the correct one
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    const isPasswordCorrect = await user.validatePassword(oldPassword);
+    if (!isPasswordCorrect) {
+        throw new apiError(400, "Old Password is incorrect");
+    }
+
+    // Update the password and save the document
+    /*
+        NOTE: Since we had already written a Mongoose Pre-Middleware for encrypting the password before saving, we need not worry about encrypting the new password again. Mongoose will take care of it automatically.
+    */
+    user.password = newPassword;
+    await user.save({ validateBeforeSave: false }); // Do not forget to save the document after making changes
+
+    // Send success message to the user
+    res.status(200).json(
+        new apiResponse(200, {}, "User password changed successfully")
+    );
+});
+
+// CONTROLLER: Get the current user (Usually used to display the currently logged user details)
+const getCurrentUser = asyncHandler(async (req, res) => {
+    // Authentication: Verify whether the user is authorized to hit this secured route
+
+    const user = req.user;
+
+    res.status(200).json(
+        new apiResponse(200, user, "User data fetched successfully")
+    );
+});
+
+// CONTROLLER: Update user account details (textual data only)
+const updateUserAccountDetails = asyncHandler(async (req, res) => {
+    // Authentication: Verify whether the user is authorized to hit this secured route
+
+    // Get necessary details from the user
+    const { fullname, email } = req.body;
+
+    // Update those fields which are non-empty and keep the empty fields unchanged in database
+    const user = req.user;
+    if (fullname?.trim()) {
+        user.fullname = fullname;
+    }
+    if (email?.trim()) {
+        user.email = email;
+    }
+    await user.save(); // Do not forget to save the document after making the changes
+
+    // Send success response to the user
+    res.status(200).json(
+        new apiResponse(200, user, "User account details updated successfully")
+    );
+});
+
+// CONTROLLER: Update user account images (Cover Image and Avatar Image)
+const updateUserAccountImages = asyncHandler(async (req, res) => {
+    // Authentication: Verify whether the user is authorized to hit this secured route
+
+    // Get the user from the req.user object injected by the Auth-midlleware
+    const user = req.user;
+
+    // Get the local file paths of cover-image and avatar
+    let avatarLocalPath = null;
+    if (req.files?.avatar) {
+        avatarLocalPath = req.files?.avatar[0]?.path;
+    }
+
+    let coverImageLocalPath = null;
+    if (req.files?.cover) {
+        coverImageLocalPath = req.files?.cover[0]?.path;
+    }
+    // console.log(avatarLocalPath);
+    // console.log(coverImageLocalPath);
+
+    // Upload the images on Cloudinary and get their public URLs
+    let avatarUploaded = null;
+    let coverImageUploaded = null;
+    if (avatarLocalPath) {
+        avatarUploaded = await uploadOnCloudinary(avatarLocalPath);
+    }
+    if (coverImageLocalPath) {
+        coverImageUploaded = await uploadOnCloudinary(coverImageLocalPath);
+    }
+
+    user.avatar = avatarUploaded?.url || user.avatar;
+    user.coverImage = coverImageUploaded?.url || user.coverImage;
+    await user.save();
+
+    cleanDirectory("./public/temp"); // clean the temporarily stored static assets in `temp` folder
+
+    // Send success response to the user
+    res.status(200).json(
+        new apiResponse(
+            200,
+            user,
+            "User avatar and cover-image successfully updated"
+        )
+    );
+});
+
+export {
+    registerUser,
+    loginUser,
+    logoutUser,
+    refreshAccessToken,
+    changeUserPassword,
+    getCurrentUser,
+    updateUserAccountDetails,
+    updateUserAccountImages,
+};
