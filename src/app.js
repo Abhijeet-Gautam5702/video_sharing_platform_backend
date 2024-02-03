@@ -45,8 +45,10 @@ app.use(cookieParser());
 
 // IMPORT ROUTES
 import userRouter from "./routes/user.routes.js";
+import channelRouter from "./routes/channel.routes.js";
 
 // Routes Declaration
 app.use("/api/v1/users", userRouter);
+app.use("/api/v1/channel", channelRouter);
 
 export default app;
