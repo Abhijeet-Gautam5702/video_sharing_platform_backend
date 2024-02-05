@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
     changeUserPassword,
     getCurrentUser,
+    getUserWatchHistory,
     loginUser,
     logoutUser,
     refreshAccessToken,
@@ -58,6 +59,6 @@ userRouter.route("/update-account-images").put(
     updateUserAccountImages
 );
 
-
+userRouter.route("/user-watch-history").get(verifyJWT, getUserWatchHistory);
 
 export default userRouter;

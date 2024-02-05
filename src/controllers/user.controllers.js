@@ -6,6 +6,7 @@ import User from "../models/user.models.js";
 import cleanDirectory from "../utils/cleanDirectory.js";
 import { generateAccessAndRefreshTokens } from "../utils/tokenGenerator.js";
 import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
 
 /*
     COOKIES
@@ -433,8 +434,6 @@ const updateUserAccountImages = asyncHandler(async (req, res) => {
     if (req.files?.cover) {
         coverImageLocalPath = req.files?.cover[0]?.path;
     }
-    // console.log(avatarLocalPath);
-    // console.log(coverImageLocalPath);
 
     // Upload the images on Cloudinary and get their public URLs
     let avatarUploaded = null;
@@ -462,6 +461,90 @@ const updateUserAccountImages = asyncHandler(async (req, res) => {
     );
 });
 
+// CONTROLLER: Get user watch history
+const getUserWatchHistory = asyncHandler(async (req, res) => {
+    // Authentication: Verify whether the user is authorized to hit this secured route
+
+    // Get the "User" document with its Watch History
+    const user = await User.aggregate([
+        // STAGE-1: Match all "User" documents and find the one with `_id` same as that of the given `_id`
+        {
+            $match: {
+                // IMPORTANT NOTE: Mongoose handles the conversion under the hoods and give us the user-ID in string format, but the actual user-ID stored in MongoDB database is of the type ObjectId. Since the aggregation pipelines are not handled by Mongoose, so we need to convert it to the desired format.
+                _id: new mongoose.Types.ObjectId(req.user._id),
+            },
+        },
+        // STAGE-2: From the currently modified "User" document, take the localField as the video-IDs given in the `watchHistory` field and lookup for them in the "Video" documents. Call the resultant field as `watchHistory`.
+        {
+            $lookup: {
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchHistory",
+                // SUB-PIPELINE: Each "Video" document has an `owner` field that is itself User-ID. We need the owner details of that video as well. So we setup another 'nested' pipeline within this lookup before returning to STAGE-2 of the original pipeline.
+                pipeline: [
+                    // STAGE-2.1: Lookup for the `owner` field in the current "Video" document and match it with the `_id` in "User" documents.
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            // ANOTHER SUB-PIPELINE: We do not want to get all the details of the owner, but only a few (e.g., username, fullname and avatar). So we setup another pipeline and project the fields into the `owner` field accordingly, before returning to STAGE-2.1
+                            pipeline: [
+                                {
+                                    $project: {
+                                        username: 1,
+                                        avatar: 1,
+                                        fullname: 1,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                    // STAGE-2.2: Stage-2.1 returns an array of objects in the `owner` field, with the 1st value (0th index) as our desired owner object. We would like to convert that array to a single object for convinience.
+                    {
+                        $addFields: {
+                            // The newly created field is also named `owner` so that it overrrides the `owner` field (which is actually an array of objects)
+                            owner: {
+                                $first: "$owner", // grab the first element of the `owner` field array
+                            },
+                        },
+                    },
+                    // STAGE-2.3: Only project certain fields of the "Video" documents before returning to STAGE-2
+                    {
+                        $project: {
+                            videoFile: 1,
+                            owner: 1,
+                            title: 1,
+                            thumbnail: 1,
+                            duration: 1,
+                            views: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        // STAGE-3: Only get certain fields in the final "User" document
+        {
+            $project: {
+                username: 1,
+                fullname: 1,
+                email: 1,
+                watchHistory: 1,
+            },
+        },
+    ]);
+    if (!user.length) {
+        throw new apiError(404, "User not found in the database");
+    }
+
+    // Send success response along with data to the user
+    res.status(200).json(
+        new apiResponse(200, user[0], "User watch history successfully fetched")
+    );
+});
+
 export {
     registerUser,
     loginUser,
@@ -471,4 +554,5 @@ export {
     getCurrentUser,
     updateUserAccountDetails,
     updateUserAccountImages,
+    getUserWatchHistory,
 };

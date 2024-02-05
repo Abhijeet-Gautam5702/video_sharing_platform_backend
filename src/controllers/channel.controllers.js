@@ -11,7 +11,7 @@ const getChannelProfile = asyncHandler(async (req, res) => {
     // Get username of the channel from the request params
     /*
         NOTE: channelUsername => username of the channel you are visiting
-              req.user._id    => username of the currently logged-in user
+              req.user._id    => ID of the currently logged-in user
     */
     const channelUsername = req.params.username?.trim();
     if (!channelUsername) {
