@@ -29,16 +29,6 @@ const videoSchema = new mongoose.Schema(
             required: true,
             trim: true,
         },
-        duration: {
-            type: Number, //from cloudinary
-            required: true,
-            trim: true,
-        },
-        views: {
-            type: Number,
-            required: true,
-            default: 0,
-        },
         isPublished: {
             type: Boolean,
             default: true,
