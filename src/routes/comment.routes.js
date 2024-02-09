@@ -18,8 +18,6 @@ commentRouter
     .route("/delete-comment/:videoId/:commentId")
     .delete(verifyJWT, deleteComment);
 
-commentRouter
-    .route("/edit-comment/:commentId")
-    .put(verifyJWT, editComment);
+commentRouter.route("/edit-comment/:commentId").put(verifyJWT, editComment);
 
-export { commentRouter };
+export default commentRouter;
