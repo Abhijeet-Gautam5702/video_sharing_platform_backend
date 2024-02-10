@@ -4,7 +4,7 @@ import { apiResponse } from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import cleanDirectory from "../utils/cleanDirectory.js";
 import uploadOnCloudinary from "../utils/fileUpload.js";
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 
 // Get all videos created by the user
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -197,10 +197,175 @@ const publishVideo = asyncHandler(async (req, res) => {
     }
 });
 
-// Update a published video (title, description and thumbnail)
+// Update a published video (title & description)
+const updateVideoDetails = asyncHandler(async (req, res) => {
+    // Authorization check by Auth middleware
+
+    // Get relevant video details from req.body
+    const { title, description } = req.body;
+    if (!title && !description) {
+        throw new apiError(
+            422,
+            "Could not update video | At least one of the required fields must be provided"
+        );
+    }
+
+    // Get the userId from req.user
+    const userId = req.user?._id;
+    if (!userId) {
+        throw new apiError(
+            500,
+            "Could not update video | User-ID not recieved"
+        );
+    }
+
+    // Get the videoId from req.params
+    const videoId = req.params?.videoId;
+    if (!videoId) {
+        throw new apiError(
+            422,
+            "Could not update video | Video-ID not provided"
+        );
+    }
+
+    // Check if the video exists in the database
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new apiError(
+            404,
+            "Could not update video | Invalid Video-ID provided | Video doesn't exist or it may be deleted"
+        );
+    }
+
+    // Check if the user is authorized to change the details of the video
+    const isUserOwnerOfTheVideo =
+        video.owner?.toString() === userId?.toString();
+    if (!isUserOwnerOfTheVideo) {
+        throw new apiError(
+            400,
+            "Could not update video | Unauthorized request | Only video owner can change details of the video"
+        );
+    }
+
+    // Update the details of the video
+    video.title = title?.trim() || video.title;
+    video.description = description?.trim() || video.description;
+    await video.save();
+
+    // Send success response to the user with the updated video data
+    res.status(200).json(
+        new apiResponse(200, video, "Video details updated successfully")
+    );
+});
 
 // Delete a published video
+const deleteVideo = asyncHandler(async (req, res) => {
+    // Authorization check by Auth middleware
+
+    // Get the userId and videoId
+    const userId = req.user?._id;
+    const videoId = req.params?.videoId;
+    if (!userId) {
+        throw new apiError(
+            500,
+            "Could not delete video | User-ID not recieved"
+        );
+    }
+    if (!videoId) {
+        throw new apiError(
+            422,
+            "Could not delete video | Video-ID not provided"
+        );
+    }
+
+    // Check if the video exists in the database
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new apiError(
+            404,
+            "Could not delete video | Invalid Video-ID provided | Video doesn't exist or it may be deleted"
+        );
+    }
+
+    // Check if the user is authorized to change the details of the video
+    const isUserOwnerOfTheVideo =
+        video.owner?.toString() === userId?.toString();
+    if (!isUserOwnerOfTheVideo) {
+        throw new apiError(
+            400,
+            "Could not delete video | Unauthorized request | Only video owner can change details of the video"
+        );
+    }
+
+    // Delete the video
+    const deleteVideo = await Video.findByIdAndDelete(videoId);
+    if (!deleteVideo) {
+        throw new apiError(
+            500,
+            "Video deletion unsuccessful | Some unknown error occured from our end"
+        );
+    }
+
+    // Send success response to the user
+    res.status(200).json(
+        new apiResponse(200, {}, "Video deleted successfully")
+    );
+});
 
 // Toggle the status of a video to published/unpublished
+const toggleVideoPublishStatus = asyncHandler(async (req, res) => {
+    // Authorization check by Auth middleware
 
-export { getAllVideos, getPublishedVideoById, publishVideo };
+    // Get the userId and videoId
+    const userId = req.user?._id;
+    const videoId = req.params?.videoId;
+    if (!userId) {
+        throw new apiError(
+            500,
+            "Could not toggle video publish status | User-ID not recieved"
+        );
+    }
+    if (!videoId) {
+        throw new apiError(
+            422,
+            "Could not toggle video publish status | Video-ID not provided"
+        );
+    }
+
+    // Check if the video exists in the database
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new apiError(
+            404,
+            "Could not toggle video publish status | Invalid Video-ID provided | Video doesn't exist or it may be deleted"
+        );
+    }
+
+    // Check if the user is authorized to change the details of the video
+    const isUserOwnerOfTheVideo =
+        video.owner?.toString() === userId?.toString();
+    if (!isUserOwnerOfTheVideo) {
+        throw new apiError(
+            400,
+            "Could not toggle video publish status | Unauthorized request | Only video owner can change details of the video"
+        );
+    }
+
+    // Change the publish status of the video
+    video.isPublished = !video.isPublished;
+    await video.save();
+
+    // Send success response to the user
+    res.status(200).json(
+        new apiResponse(200, {}, "Video publish-status changed successfully")
+    );
+});
+
+export {
+    getAllVideos,
+    getPublishedVideoById,
+    publishVideo,
+    updateVideoDetails,
+    deleteVideo,
+    toggleVideoPublishStatus
+};
