@@ -4,6 +4,7 @@ import { apiResponse } from "../utils/apiResponse.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import cleanDirectory from "../utils/cleanDirectory.js";
 import uploadOnCloudinary from "../utils/fileUpload.js";
+import mongoose from "mongoose";
 
 // Get all videos created by the user
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -19,7 +20,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
     // Get all the videos published by the user in the database
-    const publishedVideos = await Video.findById(userId);
+    const publishedVideos = await Video.find({ owner: userId }).select(
+        "-owner"
+    );
+    if (!publishedVideos) {
+        throw new apiError(404, "No videos found");
+    }
 
     // Send success response to the user
     res.status(200).json(
@@ -54,8 +60,40 @@ const getPublishedVideoById = asyncHandler(async (req, res) => {
     }
 
     // Search for the desired video
-    const publishedVideo = await Video.findById(videoId);
-    if (!publishedVideo) {
+    const publishedVideo = await Video.aggregate([
+        // STAGE-1: Match all "Video" documents whose `_id` field matches with videoId (We'll get only one such document)
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(videoId),
+            },
+        },
+        // STAGE-2: Lookup for the "User" documents (in the "users" database) with their `_id` same as the `owner` field in the modified "Video" document(s) from Stage-2
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    // STAGE-2.1: Project only the following fields in the `owner` field of each document
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            email: 1,
+                            fullname: 1,
+                            avatar: 1,
+                        },
+                    },
+                ],
+            },
+        },
+        // STAGE-3: Unwind the `owner` field (which is an array) into an object
+        {
+            $unwind: "$owner",
+        },
+    ]);
+    if (!publishedVideo.length) {
         throw new apiError(
             404,
             "Video could not be fetched | Video with the given ID not found"
