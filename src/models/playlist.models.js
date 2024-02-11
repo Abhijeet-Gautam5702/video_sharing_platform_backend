@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const playlistSchema = new mongoose.Schema(
     {
-        name: {
+        title: {
             type: String,
             required: true,
             trim: true,
