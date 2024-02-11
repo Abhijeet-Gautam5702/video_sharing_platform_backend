@@ -197,7 +197,7 @@ const publishVideo = asyncHandler(async (req, res) => {
     }
 });
 
-// Update a published video (title & description)
+// Update a video (title & description)
 const updateVideoDetails = asyncHandler(async (req, res) => {
     // Authorization check by Auth middleware
 
@@ -256,6 +256,88 @@ const updateVideoDetails = asyncHandler(async (req, res) => {
     res.status(200).json(
         new apiResponse(200, video, "Video details updated successfully")
     );
+});
+
+// Update the thumbnail of a video
+const updateVideoThumbnail = asyncHandler(async (req, res) => {
+    // Authorization check by Auth middleware
+
+    try {
+        // Get the thumbnail file from req.file
+        const videoThumbnail = req.file;
+        if (!videoThumbnail) {
+            throw new apiError(
+                422,
+                "Could not update thumbnail | Video-Thumbnail not recieved"
+            );
+        }
+
+        // Get the userId from req.user
+        const userId = req.user?._id;
+        if (!userId) {
+            throw new apiError(
+                500,
+                "Could not update thumbnail | User-ID not recieved"
+            );
+        }
+
+        // Get the videoId from req.params
+        const videoId = req.params?.videoId;
+        if (!videoId) {
+            throw new apiError(
+                422,
+                "Could not update thumbnail | Video-ID not recieved"
+            );
+        }
+
+        // Check if the video exists
+        const video = await Video.findById(videoId);
+        if (!video) {
+            throw new apiError(
+                404,
+                "Could not update thumbnail | Video does not exist or it may be deleted"
+            );
+        }
+
+        // Check if the user is authorized to makes changes to the video
+        const isUserOwnerOfTheVideo =
+            video.owner.toString() === userId.toString();
+        if (!isUserOwnerOfTheVideo) {
+            throw new apiError(
+                400,
+                "Could not update thumbnail | Only the owner of the video can make changes to the video"
+            );
+        }
+
+        // Get the local path of the video-thumbnail
+        const videoThumbnailLocalPath = videoThumbnail.path;
+        // Upload the video-thumbnail to Cloudinary
+        const videoThumbnailUploaded = await uploadOnCloudinary(
+            videoThumbnailLocalPath
+        );
+        if (!videoThumbnailUploaded) {
+            throw new apiError(
+                500,
+                "Could not update thumbnail | Video-Thumbnail image could not uploaded on Cloudinary from our end"
+            );
+        }
+        // Update the `thumbnail` field of the "Video" document with the new public URL
+        video.thumbnail = videoThumbnailUploaded.url || video.thumbnail;
+        await video.save();
+
+        // Send success response to the user with new video data
+        res.status(200).json(
+            new apiResponse(200, video, "Video thumbnail updated successfully")
+        );
+    } catch (error) {
+        throw new apiError(
+            error.statusCode || 500,
+            error.message || "Some unknown error occured from our end"
+        );
+    } finally {
+        // In any case, clean the "./public/temp" directory
+        cleanDirectory("./public/temp");
+    }
 });
 
 // Delete a published video
@@ -367,5 +449,6 @@ export {
     publishVideo,
     updateVideoDetails,
     deleteVideo,
-    toggleVideoPublishStatus
+    toggleVideoPublishStatus,
+    updateVideoThumbnail,
 };

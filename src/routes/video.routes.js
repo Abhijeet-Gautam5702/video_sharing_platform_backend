@@ -7,6 +7,7 @@ import {
     publishVideo,
     toggleVideoPublishStatus,
     updateVideoDetails,
+    updateVideoThumbnail,
 } from "../controllers/video.controllers.js";
 import { multerUpload } from "../middlewares/multer.middlewares.js";
 
@@ -39,8 +40,14 @@ videoRouter
     .route("/update-video-details/:videoId")
     .patch(multerUpload.none(), verifyJWT, updateVideoDetails);
 
+videoRouter
+    .route("/update-video-thumbnail/:videoId")
+    .patch(multerUpload.single("thumbnail"), verifyJWT, updateVideoThumbnail);
+
 videoRouter.route("/delete-video/:videoId").delete(verifyJWT, deleteVideo);
 
-videoRouter.route("/toggle-video-publish-status/:videoId").patch(verifyJWT,toggleVideoPublishStatus)
+videoRouter
+    .route("/toggle-video-publish-status/:videoId")
+    .patch(verifyJWT, toggleVideoPublishStatus);
 
 export default videoRouter;
