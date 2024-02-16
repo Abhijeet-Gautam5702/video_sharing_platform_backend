@@ -2,10 +2,12 @@ import { Router } from "express";
 import {
     addVideoToPlaylist,
     createPlaylist,
+    deletePlaylist,
     getPlaylistById,
     getPlaylists,
     getVideosInPlaylist,
     removeVideoFromPlaylist,
+    updatePlaylistDetails,
 } from "../controllers/playlist.controllers.js";
 import { verifyJWT } from "../middlewares/auth.middlewares.js";
 import { multerUpload } from "../middlewares/multer.middlewares.js";
@@ -18,7 +20,15 @@ playlistRouter
     .route("/create-playlist")
     .post(verifyJWT, multerUpload.none(), createPlaylist);
 
+playlistRouter
+    .route("/delete-playlist/:playlistId")
+    .delete(verifyJWT, deletePlaylist);
+
 playlistRouter.route("/get-playlists").get(verifyJWT, getPlaylists);
+
+playlistRouter
+    .route("/update-playlist/:playlistId")
+    .put(multerUpload.none(), verifyJWT, updatePlaylistDetails);
 
 playlistRouter
     .route("/add-video-to-playlist/:playlistId")

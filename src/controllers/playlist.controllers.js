@@ -122,8 +122,141 @@ const getPlaylists = asyncHandler(async (req, res) => {
 });
 
 // Delete an entire playlist
+const deletePlaylist = asyncHandler(async (req, res) => {
+    // Authorization check by Auth middleware
+
+    // Get userId from req.user
+    const userId = req.user?._id;
+    if (!userId) {
+        throw new apiError(
+            500,
+            "Playlist could not be deleted successfully | User-ID not recieved"
+        );
+    }
+
+    // Get the playlist-ID
+    const playlistId = req.params?.playlistId;
+    if (!validateObjectId(playlistId)) {
+        throw new apiError(
+            422,
+            "Playlist could not be deleted successfully | Invalid Playlist-ID"
+        );
+    }
+    if (!playlistId) {
+        throw new apiError(
+            422,
+            "Playlist could not be deleted successfully | Playlist-ID not recieved"
+        );
+    }
+
+    // Check if there exists a playlist with the given ID
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+        throw new apiError(
+            404,
+            "Playlist could not be deleted successfully | No playlist exists with the given ID"
+        );
+    }
+
+    // Check if the user is authorized to make changes to the playlist
+    const isUserOwnerOfPlaylist =
+        playlist.owner.toString() === userId.toString();
+    if (!isUserOwnerOfPlaylist) {
+        throw new apiError(
+            400,
+            "Playlist could not be deleted successfully | Only the owner of the playlist can add videos to it"
+        );
+    }
+
+    // Delete the playlist from the database
+    const deletedPlaylist = await Playlist.findByIdAndDelete(playlistId);
+    if (!deletedPlaylist) {
+        throw new apiError(
+            500,
+            "Playlist could not be deleted successfully | Some unknown error occured at our end"
+        );
+    }
+
+    // Send success response to the user
+    res.status(200).json(
+        new apiResponse(200, {}, "Playlist deleted successfully")
+    );
+});
 
 // Update details of a playlist (Title and Description)
+const updatePlaylistDetails = asyncHandler(async (req, res) => {
+    // Authorization check by Auth middleware
+
+    // Get userId from req.user
+    const userId = req.user?._id;
+    if (!userId) {
+        throw new apiError(
+            500,
+            "Playlist could not be deleted successfully | User-ID not recieved"
+        );
+    }
+
+    // Get the playlist-ID
+    const playlistId = req.params?.playlistId;
+    if (!validateObjectId(playlistId)) {
+        throw new apiError(
+            422,
+            "Playlist details could not be updated successfully | Invalid Playlist-ID"
+        );
+    }
+    if (!playlistId) {
+        throw new apiError(
+            422,
+            "Playlist details could not be updated successfully | Playlist-ID not recieved"
+        );
+    }
+
+    // Get playlist details to be updated from the request body
+    const { title, description } = req.body;
+    if (!title && !description) {
+        throw new apiError(
+            422,
+            "Playlist details could not be updated successfully | At least one of the fields must be provided"
+        );
+    }
+
+    // Check if there exists a playlist with the given ID
+    const playlist = await Playlist.findById(playlistId);
+    if (!playlist) {
+        throw new apiError(
+            404,
+            "Playlist details could not be updated successfully | No playlist exists with the given ID"
+        );
+    }
+
+    // Check if the user is authorized to make changes to the playlist
+    const isUserOwnerOfPlaylist =
+        playlist.owner.toString() === userId.toString();
+    if (!isUserOwnerOfPlaylist) {
+        throw new apiError(
+            400,
+            "Playlist details could not be updated successfully | Only the owner of the playlist can add videos to it"
+        );
+    }
+
+    // Make changes to the playlist
+    playlist.title = title || playlist.title;
+    playlist.description = description || playlist.description;
+    await playlist.save();
+
+    // Send success response to the user with updated playlist data
+    res.status(200).json(
+        new apiResponse(
+            200,
+            {
+                _id: playlist._id,
+                title: playlist.title,
+                description: playlist.description,
+            },
+            "Playlist details updated successfully"
+        )
+    );
+});
 
 // Get a playlist by its ID
 const getPlaylistById = asyncHandler(async (req, res) => {
@@ -430,6 +563,8 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
 
 export {
     createPlaylist,
+    deletePlaylist,
+    updatePlaylistDetails,
     getPlaylists,
     addVideoToPlaylist,
     getVideosInPlaylist,
