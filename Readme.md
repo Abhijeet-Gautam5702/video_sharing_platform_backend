@@ -58,11 +58,11 @@ The POSTMAN API-Collection is provided in the root-directory for testing all the
 
 This project contains one of the most comprehensive code and API-endpoints for user related backend endpoints.
 
-`GET` : `<SERVER>/users/get-current-user`
+<span style="color:green;">**GET**</span> : `<SERVER>/users/get-current-user`
 
-`GET` : `<SERVER>/users/user-watch-history`
+<span style="color:green;">**GET**</span> : `<SERVER>/users/user-watch-history`
 
-`POST` : `<SERVER>/users/register`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/users/register`
 
 **BODY (form-data)**
 
@@ -75,7 +75,7 @@ avatar:
 cover:
 ```
 
-`POST` : `<SERVER>/users/login`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/users/login`
 
 **BODY (form-data)**
 
@@ -85,11 +85,11 @@ email:
 password:
 ```
 
-`POST` : `<SERVER>/users/logout`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/users/logout`
 
-`PUT` : `<SERVER>/users/refresh-access-token`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/users/refresh-access-token`
 
-`PUT` : `<SERVER>/users/change-password`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/users/change-password`
 
 **BODY (raw JSON)**
 
@@ -101,7 +101,7 @@ password:
 }
 ```
 
-`PUT` : `<SERVER>/users/update-account-details`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/users/update-account-details`
 
 **BODY (raw JSON)**
 
@@ -112,7 +112,7 @@ password:
 }
 ```
 
-`PUT` : `<SERVER>/users/update-account-images`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/users/update-account-images`
 
 **BODY (form-data)**
 
@@ -125,11 +125,11 @@ cover:
 
 ### Video Routes
 
-`GET` : `<SERVER>/videos/get-videos`
+<span style="color:green;">**GET**</span> : `<SERVER>/videos/get-videos`
 
-`GET` : `<SERVER>/videos/get-video-by-id/:videoId`
+<span style="color:green;">**GET**</span> : `<SERVER>/videos/get-video-by-id/:videoId`
 
-`POST` : `<SERVER>/videos/publish-video`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/videos/publish-video`
 
 **BODY (form-data)**
 
@@ -140,9 +140,9 @@ thumbnail:
 videoFile:
 ```
 
-`DELETE` : `<SERVER>/videos/delete-video/:videoId`
+<span style="color:red;">**DELETE**</span> : `<SERVER>/videos/delete-video/:videoId`
 
-`PATCH` : `<SERVER>/videos/update-video-details/:videoId`
+<span style="color:cyan;">**PATCH**</span> : `<SERVER>/videos/update-video-details/:videoId`
 
 **BODY (form-data)**
 
@@ -151,9 +151,9 @@ title:
 description:
 ```
 
-`PATCH` : `<SERVER>/videos/toggle-video-publish-status/:videoId`
+<span style="color:cyan;">**PATCH**</span> : `<SERVER>/videos/toggle-video-publish-status/:videoId`
 
-`PATCH` : `<SERVER>/videos/update-video-thumbnail/:videoId`
+<span style="color:cyan;">**PATCH**</span> : `<SERVER>/videos/update-video-thumbnail/:videoId`
 
 **BODY (form-data)**
 
@@ -165,9 +165,9 @@ thumbnail:
 
 ### Comment Routes
 
-`GET` : `<SERVER>/comments/comments/:videoId`
+<span style="color:green;">**GET**</span> : `<SERVER>/comments/comments/:videoId`
 
-`POST` : `<SERVER>/comments/add-comment/:videoId`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/comments/add-comment/:videoId`
 
 **BODY (raw JSON)**
 
@@ -177,9 +177,9 @@ thumbnail:
 }
 ```
 
-`DELETE` : `<SERVER>/comments/delete-comment/:commentId`
+<span style="color:red;">**DELETE**</span> : `<SERVER>/comments/delete-comment/:commentId`
 
-`PUT` : `<SERVER>/comments/edit-comment/:commentId`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/comments/edit-comment/:commentId`
 
 **BODY (raw JSON)**
 
@@ -193,37 +193,37 @@ thumbnail:
 
 ### Like
 
-`GET` : `<SERVER>/likes/get-liked-videos`
+<span style="color:green;">**GET**</span> : `<SERVER>/likes/get-liked-videos`
 
-`POST` : `<SERVER>/likes/toggle-video-like/:videoId`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/likes/toggle-video-like/:videoId`
 
-`POST` : `<SERVER>/likes/toggle-comment-like/:videoId`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/likes/toggle-comment-like/:videoId`
 
 ---
 
 ### Channel Routes
 
-`GET` : `<SERVER>/channels/get-channel-details/:channelUsername`
+<span style="color:green;">**GET**</span> : `<SERVER>/channels/get-channel-details/:channelUsername`
 
 ---
 
 ### Dashboard Routes
 
-`GET` : `<SERVER>/dashboard/get-channel-videos`
+<span style="color:green;">**GET**</span> : `<SERVER>/dashboard/get-channel-videos`
 
-`GET` : `<SERVER>/dashboard/get-channel-stats`
+<span style="color:green;">**GET**</span> : `<SERVER>/dashboard/get-channel-stats`
 
 ---
 
 ### Playlist Routes
 
-`GET` : `<SERVER>/playlists/get-playlists`
+<span style="color:green;">**GET**</span> : `<SERVER>/playlists/get-playlists`
 
-`GET` : `<SERVER>/playlists/get-videos-in-playlist/:playlistId`
+<span style="color:green;">**GET**</span> : `<SERVER>/playlists/get-videos-in-playlist/:playlistId`
 
-`GET` : `<SERVER>/playlists/get-playlist-by-id/:playlistId`
+<span style="color:green;">**GET**</span> : `<SERVER>/playlists/get-playlist-by-id/:playlistId`
 
-`POST` : `<SERVER>/playlists/create-playlist`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/playlists/create-playlist`
 
 **BODY (form-data)**
 
@@ -232,7 +232,7 @@ title:
 description:
 ```
 
-`POST` : `<SERVER>/playlists/add-video-to-playlist/:playlistId`
+<span style="color:yellow;">**POST**</span> : `<SERVER>/playlists/add-video-to-playlist/:playlistId`
 
 **BODY (form-data)**
 
@@ -240,9 +240,9 @@ description:
 videoId:
 ```
 
-`DELETE` : `<SERVER>/playlists/delete-playlist/:playlistId`
+<span style="color:red;">**DELETE**</span> : `<SERVER>/playlists/delete-playlist/:playlistId`
 
-`PUT` : `<SERVER>/playlists/remove-video-from-playlist/:playlistId`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/playlists/remove-video-from-playlist/:playlistId`
 
 **BODY (form-data)**
 
@@ -250,7 +250,7 @@ videoId:
 videoId:
 ```
 
-`PUT` : `<SERVER>/playlists/update-playlist/:playlistId`
+<span style="color:cyan;">**PUT**</span> : `<SERVER>/playlists/update-playlist/:playlistId`
 
 **BODY (form-data)**
 
