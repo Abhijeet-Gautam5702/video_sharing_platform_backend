@@ -9,4 +9,8 @@ const dashboardRouter = Router();
 
 // Secured Routes
 
+dashboardRouter.route("/get-channel-stats").get(verifyJWT, getChannelStats);
+
+dashboardRouter.route("/get-channel-videos").get(verifyJWT, getChannelVideos)
+
 export default dashboardRouter;
