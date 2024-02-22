@@ -15,7 +15,7 @@ const videoRouter = Router();
 
 // Secured Routes
 
-videoRouter.route("/get-videos").get(verifyJWT, getAllVideos);
+videoRouter.route("/get-videos").get(getAllVideos);
 
 videoRouter
     .route("/get-video-by-id/:videoId")

@@ -1,7 +1,6 @@
 // Video Model
 
 import mongoose from "mongoose";
-import mongooseAggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const videoSchema = new mongoose.Schema(
     {
@@ -33,11 +32,19 @@ const videoSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        views: {
+            type: Number,
+            default: 0,
+        },
     },
     { timestamps: true }
 );
 
-videoSchema.plugin(mongooseAggregatePaginate);
+// Mongoose Method: Increment video views
+videoSchema.methods.incrementViews = async function () {
+    this.views = this.views + 1;
+    await this.save();
+};
 
 const Video = mongoose.model("Video", videoSchema);
 

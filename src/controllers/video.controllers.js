@@ -20,20 +20,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
     }
 
     // Get all the videos published by the user in the database
-    const publishedVideos = await Video.find({ owner: userId }).select(
-        "-owner"
-    );
-    if (!publishedVideos) {
+    const publishedVideos = await Video.find({});
+    if (!publishedVideos.length) {
         throw new apiError(404, "No videos found");
     }
 
     // Send success response to the user
     res.status(200).json(
-        new apiResponse(
-            200,
-            publishedVideos,
-            "Published videos fetched successfully"
-        )
+        new apiResponse(200, publishedVideos, "All videos fetched successfully")
     );
 });
 
@@ -59,7 +53,18 @@ const getPublishedVideoById = asyncHandler(async (req, res) => {
         );
     }
 
-    // Search for the desired video
+    // Check if the video exists
+    const video = await Video.findById(videoId);
+    if (!video) {
+        throw new apiError(
+            404,
+            "Video could not be fetched | Video with the given ID not found"
+        );
+    }
+    // Increment the video views
+    await video.incrementViews();
+
+    // Search for the desired video details
     const publishedVideo = await Video.aggregate([
         // STAGE-1: Match all "Video" documents whose `_id` field matches with videoId (We'll get only one such document)
         {
@@ -95,14 +100,14 @@ const getPublishedVideoById = asyncHandler(async (req, res) => {
     ]);
     if (!publishedVideo.length) {
         throw new apiError(
-            404,
-            "Video could not be fetched | Video with the given ID not found"
+            500,
+            "Video could not be fetched | Some unknown error occured at our end"
         );
     }
 
     // Send success response to the user
     res.status(200).json(
-        new apiResponse(200, publishedVideo, "Video fetched successfully")
+        new apiResponse(200, publishedVideo[0], "Video fetched successfully")
     );
 });
 
